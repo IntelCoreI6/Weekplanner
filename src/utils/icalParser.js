@@ -1,6 +1,64 @@
 import axios from 'axios';
 import ICAL from 'ical.js';
 
+/**
+ * Extracts and processes a property value from iCal data with proper handling of escaped chars
+ * @param {string} icalData - Raw iCal data
+ * @param {string} propName - Name of the property to extract (e.g., "DESCRIPTION")
+ * @returns {string} The processed property value
+ */
+function extractICalProperty(icalData, propName) {
+  console.log(`Attempting to extract ${propName} from iCal data`);
+  
+  // Search for the property in the raw data to confirm it exists
+  const propIndex = icalData.indexOf(`${propName}:`);
+  const paramPropIndex = icalData.indexOf(`${propName};`);
+  
+  if (propIndex === -1 && paramPropIndex === -1) {
+    console.log(`${propName} not found in the raw data`);
+    return '';
+  } else {
+    console.log(`${propName} found in raw data at index ${propIndex !== -1 ? propIndex : paramPropIndex}`);
+  }
+  
+  // Improved regex to be more flexible with property endings
+  // This handles cases where the property might not end with a standard pattern
+  const propPattern = new RegExp(`${propName}(?:;[^:\\r\\n]+)*:(.+?)(?=\\r?\\n(?:[A-Z]|END:|BEGIN:)|$)`, 's');
+  console.log(`Using regex pattern: ${propPattern}`);
+  
+  const match = icalData.match(propPattern);
+  
+  if (!match) {
+    console.log(`No match found for ${propName} using regex`);
+    
+    // Additional debug: extract and show context around where the property should be
+    if (propIndex !== -1 || paramPropIndex !== -1) {
+      const startIdx = Math.max(0, (propIndex !== -1 ? propIndex : paramPropIndex) - 20);
+      const endIdx = Math.min(icalData.length, (propIndex !== -1 ? propIndex : paramPropIndex) + 100);
+      console.log(`Context around ${propName}:`, icalData.substring(startIdx, endIdx));
+    }
+    
+    return '';
+  }
+  
+  console.log(`Match found for ${propName}: "${match[1].substring(0, 50)}${match[1].length > 50 ? '...' : ''}"`);
+  
+  let value = match[1].trim();
+  
+  // Handle common iCal escape sequences
+  value = value
+    .replace(/\\n/g, '\n')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\"/g, '"')
+    // Handle line folding (lines continued with whitespace)
+    .replace(/\r?\n\s+/g, '');
+  
+  console.log(`Processed ${propName} value: "${value.substring(0, 50)}${value.length > 50 ? '...' : ''}"`);
+  return value;
+}
+
 export const parseICalFeed = async (url) => {
   try {
     let icalData = null;
@@ -100,30 +158,15 @@ export const parseICalFeed = async (url) => {
             if (endIndex !== -1) {
               const eventData = eventBlock.substring(0, endIndex);
               
-              // Function to extract properties, handling multi-line values
-              const extractProperty = (propName) => {
-                const regex = new RegExp(`${propName}:(.+?)(?=\\n[A-Z]|\\nEND:)`, 's');
-                const match = eventData.match(regex);
-                return match ? match[1].trim().replace(/\\n/g, '\n') : '';
-              };
+              // Extract all relevant properties using our helper function
+              const uid = extractICalProperty(eventData, 'UID');
+              const summary = extractICalProperty(eventData, 'SUMMARY');
+              const description = extractICalProperty(eventData, 'DESCRIPTION');
+              const dtstart = extractICalProperty(eventData, 'DTSTART');
+              const dtend = extractICalProperty(eventData, 'DTEND');
+              const location = extractICalProperty(eventData, 'LOCATION');
               
-              // Extract all relevant properties
-              const uid = extractProperty('UID');
-              const summary = extractProperty('SUMMARY');
-              
-              // For DESCRIPTION, we need special handling
-              let description = '';
-              const descMatch = eventData.match(/DESCRIPTION:(.*?)(?=\n[A-Z]|\nEND:)/s);
-              if (descMatch) {
-                description = descMatch[1].trim()
-                  .replace(/\\n/g, '\n')  // Handle escaped newlines
-                  .replace(/\\,/g, ',');  // Handle escaped commas
-              }
-              
-              // Extract date properties
-              const dtstart = extractProperty('DTSTART');
-              const dtend = extractProperty('DTEND');
-              const location = extractProperty('LOCATION');
+              console.log('Extracted description:', description);
               
               manuallyParsedEvents.push({
                 id: uid || `manual-event-${i}`,
@@ -141,20 +184,39 @@ export const parseICalFeed = async (url) => {
             // Process these events
             const parsedEvents = manuallyParsedEvents.map(event => {
               const description = event.description || '';
+              console.log('Processing event description:', description);
               
-              // Extract details from description
-              const teacherMatch = description.match(/Leerkrachten: (.*?)(?:\n|$)/);
-              const classMatch = description.match(/Klassen en\/of leerlingen: (.*?)(?:\n|$)/);
-              const subjectMatch = description.match(/Vakken: (.*?)(?:\n|$)/);
-              const typeMatch = description.match(/Opdrachttype: (.*?)(?:\n|$)/);
+              // Updated regex patterns for extracting fields
+              const teacherMatch = description.match(/Leerkrachten:\s*(.*?)(?:\r?\n|$)/);
+              const classMatch = description.match(/Klassen en\/of leerlingen:\s*(.*?)(?:\r?\n|$)/);
+              const subjectMatch = description.match(/Vakken:\s*(.*?)(?:\r?\n|$)/);
+              const typeMatch = description.match(/Opdrachttype:\s*(.*?)(?:\r?\n|$)/);
               
-              return {
+              // Log matches for debugging
+              console.log('Teacher match:', teacherMatch ? teacherMatch[1] : 'No match');
+              console.log('Class match:', classMatch ? classMatch[1] : 'No match');
+              console.log('Subject match:', subjectMatch ? subjectMatch[1] : 'No match');
+              console.log('Type match:', typeMatch ? typeMatch[1] : 'No match');
+              
+              const parsedEvent = {
                 ...event,
                 teacher: teacherMatch ? teacherMatch[1].trim() : '',
                 class: classMatch ? classMatch[1].trim() : '',
                 subject: subjectMatch ? subjectMatch[1].trim() : '',
                 type: typeMatch ? typeMatch[1].trim() : '',
               };
+              
+              // If we didn't get all the fields, try the alternative parser
+              if (!parsedEvent.subject || !parsedEvent.type) {
+                const fallbackFields = parseDescriptionFields(description);
+                parsedEvent.teacher = parsedEvent.teacher || fallbackFields.teacher || '';
+                parsedEvent.class = parsedEvent.class || fallbackFields.class || '';
+                parsedEvent.subject = parsedEvent.subject || fallbackFields.subject || '';
+                parsedEvent.type = parsedEvent.type || fallbackFields.type || '';
+              }
+              
+              console.log('Parsed event:', parsedEvent);
+              return parsedEvent;
             });
             
             return parsedEvents;
@@ -203,15 +265,38 @@ export const parseICalFeed = async (url) => {
       const parsedEvents = events.map((event, index) => {
         try {
           const icalEvent = new ICAL.Event(event);
-          const description = icalEvent.description || '';
+          let description = icalEvent.description || '';
           
-          // Extract details from description
-          const teacherMatch = description.match(/Leerkrachten: (.*?)(\n|$)/);
-          const classMatch = description.match(/Klassen en\/of leerlingen: (.*?)(\n|$)/);
-          const subjectMatch = description.match(/Vakken: (.*?)(\n|$)/);
-          const typeMatch = description.match(/Opdrachttype: (.*?)(\n|$)/);
+          // Additional processing for ICAL.js extracted descriptions
+          if (description) {
+            // Sometimes ICAL.js doesn't fully process escaped characters
+            description = description
+              .replace(/\\n/g, '\n')
+              .replace(/\\,/g, ',')
+              .replace(/\\;/g, ';')
+              .replace(/\\\\/g, '\\')
+              .replace(/\\"/g, '"')
+              .replace(/\s*\r?\n\s+/g, '\n');
+            
+            console.log('ICAL.js Raw description:', icalEvent.description);
+            console.log('ICAL.js Processed description:', description);
+          }
           
-          return {
+          console.log(`Processing ICAL event ${index} description:`, description);
+          
+          // Updated regex patterns for the ICAL.js parsed events
+          const teacherMatch = description.match(/Leerkrachten:\s*(.*?)(?:\r?\n|$)/);
+          const classMatch = description.match(/Klassen en\/of leerlingen:\s*(.*?)(?:\r?\n|$)/);
+          const subjectMatch = description.match(/Vakken:\s*(.*?)(?:\r?\n|$)/);
+          const typeMatch = description.match(/Opdrachttype:\s*(.*?)(?:\r?\n|$)/);
+          
+          // Log matches for debugging
+          console.log('Teacher match:', teacherMatch ? teacherMatch[1] : 'No match');
+          console.log('Class match:', classMatch ? classMatch[1] : 'No match');
+          console.log('Subject match:', subjectMatch ? subjectMatch[1] : 'No match');
+          console.log('Type match:', typeMatch ? typeMatch[1] : 'No match');
+          
+          const parsedEvent = {
             id: icalEvent.uid || `event-${index}`,
             summary: icalEvent.summary,
             description: description,
@@ -223,6 +308,17 @@ export const parseICalFeed = async (url) => {
             type: typeMatch ? typeMatch[1].trim() : '',
             location: icalEvent.location,
           };
+          
+          // If we didn't get all the fields, try the alternative parser
+          if (!parsedEvent.subject || !parsedEvent.type) {
+            const fallbackFields = parseDescriptionFields(description);
+            parsedEvent.teacher = parsedEvent.teacher || fallbackFields.teacher || '';
+            parsedEvent.class = parsedEvent.class || fallbackFields.class || '';
+            parsedEvent.subject = parsedEvent.subject || fallbackFields.subject || '';
+            parsedEvent.type = parsedEvent.type || fallbackFields.type || '';
+          }
+          
+          return parsedEvent;
         } catch (eventError) {
           console.error(`Error processing event at index ${index}:`, eventError);
           console.log('Event data:', event.toString());
@@ -287,4 +383,32 @@ function parseICalDate(icalDate) {
     console.error('Error parsing iCal date:', e, icalDate);
     return new Date().toISOString();
   }
+}
+
+// Helper function to parse description fields line by line
+function parseDescriptionFields(description) {
+  if (!description) return {};
+  
+  console.log("Parsing description line by line:", description);
+  
+  // Try an alternative line-by-line approach
+  const lines = description.split(/\r?\n/); // Handle both \n and \r\n
+  const fields = {};
+  
+  for (const line of lines) {
+    console.log("Processing line:", line);
+    
+    if (line.startsWith('Leerkrachten:')) {
+      fields.teacher = line.substring('Leerkrachten:'.length).trim();
+    } else if (line.startsWith('Klassen en/of leerlingen:')) {
+      fields.class = line.substring('Klassen en/of leerlingen:'.length).trim();
+    } else if (line.startsWith('Vakken:')) {
+      fields.subject = line.substring('Vakken:'.length).trim();
+    } else if (line.startsWith('Opdrachttype:')) {
+      fields.type = line.substring('Opdrachttype:'.length).trim();
+    }
+  }
+  
+  console.log("Extracted fields:", fields);
+  return fields;
 }
