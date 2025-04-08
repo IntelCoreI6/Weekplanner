@@ -1,0 +1,33 @@
+/* Compact datetime selector styles */
+.datetime-container {
+  margin-bottom: 15px;
+}
+
+.datetime-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.datetime-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.datetime-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.datetime-inputs {
+  display: flex;
+  gap: 5px;
+}
+
+.datetime-inputs input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

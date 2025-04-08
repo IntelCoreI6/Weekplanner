@@ -38,3 +38,27 @@ export const formatTime = (hours, minutes = 0) => {
 export const formatDate = (date) => {
   return date.toISOString().split('T')[0];
 };
+
+/**
+ * Format a date in DD/MM/YYYY format
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date string
+ */
+export const formatDateEU = (date) => {
+  const d = new Date(date);
+  return d.toLocaleDateString('nl-NL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
+/**
+ * Format time in 24-hour format (HH:MM)
+ * @param {number} hours - Hours (0-23)
+ * @param {number} minutes - Minutes (0-59)
+ * @returns {string} Formatted time string
+ */
+export const formatTime24h = (hours, minutes = 0) => {
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};

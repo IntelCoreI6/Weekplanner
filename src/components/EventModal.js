@@ -51,37 +51,11 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
           {editedEvent.summary}
         </div>
         
-        {/* Display type and subject at the top for visibility */}
-        <div className="event-details-header">
-          {editedEvent.type && (
-            <div className="event-header-info">
-              <strong>Type: </strong>
-              <span className={getTypeBadgeClass()}>{editedEvent.type}</span>
-            </div>
-          )}
-          {editedEvent.subject && (
-            <div className="event-header-info">
-              <strong>Subject: </strong>
-              <span className="event-subject-value">{editedEvent.subject}</span>
-            </div>
-          )}
-          {editedEvent.teacher && (
-            <div className="event-header-info">
-              <strong>Teacher: </strong>{editedEvent.teacher}
-            </div>
-          )}
-          {editedEvent.class && (
-            <div className="event-header-info">
-              <strong>Class: </strong>{editedEvent.class}
-            </div>
-          )}
-        </div>
-        
-        <hr className="event-form-divider" />
+        {/* Remove event details header/top visualization */}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Summary</label>
+            <label>Title</label>
             <input 
               type="text" 
               name="summary" 
@@ -91,7 +65,7 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
           </div>
           
           <div className="form-group highlighted-field">
-            <label>Subject (Vakken)</label>
+            <label>Vak</label>
             <input 
               type="text" 
               name="subject" 
@@ -102,7 +76,7 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
           </div>
           
           <div className="form-group">
-            <label>Teacher</label>
+            <label>Leerkracht</label>
             <input 
               type="text" 
               name="teacher" 
@@ -112,7 +86,7 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
           </div>
           
           <div className="form-group">
-            <label>Class</label>
+            <label>Klas</label>
             <input 
               type="text" 
               name="class" 
@@ -122,7 +96,7 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
           </div>
           
           <div className="form-group highlighted-field">
-            <label>Assignment Type (Opdrachttype)</label>
+            <label>Opdrachttype</label>
             <select 
               name="type" 
               value={editedEvent.type || ''} 
@@ -140,55 +114,48 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
             </select>
           </div>
           
-          <div className="form-group">
-            <label>Start Date</label>
-            <input 
-              type="date" 
-              name="startDate" 
-              value={editedEvent.startDate} 
-              onChange={handleChange} 
-            />
+          {/* Make date/time selectors more compact */}
+          <div className="datetime-container">
+            <div className="datetime-group">
+              <div className="datetime-field">
+                <label>Start</label>
+                <div className="datetime-inputs">
+                  <input 
+                    type="date" 
+                    name="startDate" 
+                    value={editedEvent.startDate} 
+                    onChange={handleChange} 
+                  />
+                  <input 
+                    type="time" 
+                    name="startTime" 
+                    value={editedEvent.startTime} 
+                    onChange={handleChange} 
+                  />
+                </div>
+              </div>
+              
+              <div className="datetime-field">
+                <label>End</label>
+                <div className="datetime-inputs">
+                  <input 
+                    type="date" 
+                    name="endDate" 
+                    value={editedEvent.endDate} 
+                    onChange={handleChange} 
+                  />
+                  <input 
+                    type="time" 
+                    name="endTime" 
+                    value={editedEvent.endTime} 
+                    onChange={handleChange} 
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           
-          <div className="form-group">
-            <label>Start Time</label>
-            <input 
-              type="time" 
-              name="startTime" 
-              value={editedEvent.startTime} 
-              onChange={handleChange} 
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>End Date</label>
-            <input 
-              type="date" 
-              name="endDate" 
-              value={editedEvent.endDate} 
-              onChange={handleChange} 
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>End Time</label>
-            <input 
-              type="time" 
-              name="endTime" 
-              value={editedEvent.endTime} 
-              onChange={handleChange} 
-            />
-          </div>
-          
-          <div className="form-group">
-            <label>Description</label>
-            <textarea 
-              name="description" 
-              value={editedEvent.description || ''} 
-              onChange={handleChange}
-              rows="4"
-            ></textarea>
-          </div>
+          {/* Hide description field as requested */}
           
           <div className="button-group">
             <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
