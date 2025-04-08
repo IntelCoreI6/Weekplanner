@@ -1,0 +1,191 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 2px;
+  margin: 20px 0;
+}
+
+.time-column {
+  grid-column: 1;
+}
+
+.time-slot {
+  height: 60px;
+  padding: 5px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-header {
+  background-color: #f5f5f5;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #ddd;
+}
+
+.day-column {
+  display: grid;
+  grid-template-rows: repeat(24, 60px);
+  position: relative;
+}
+
+.event {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Color coding for different event types */
+.event-Grote-toets {
+  background-color: rgba(255, 99, 71, 0.7);
+}
+
+.event-Kleine-toets {
+  background-color: rgba(255, 165, 0, 0.7);
+}
+
+.event-Huiswerk {
+  background-color: rgba(100, 149, 237, 0.7);
+}
+
+.event-Taak {
+  background-color: rgba(144, 238, 144, 0.7);
+}
+
+.event-other {
+  background-color: rgba(211, 211, 211, 0.7);
+}
+
+.event-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.event-form {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.primary-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.danger-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.secondary-button {
+  background-color: #555;
+  color: white;
+}
+
+/* Print-specific styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+  
+  .print-layout {
+    display: block;
+    width: 100%;
+  }
+  
+  .print-week-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  
+  .print-week-table th, .print-week-table td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: left;
+    font-size: 10px;
+    vertical-align: top;
+  }
+  
+  .print-week-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  
+  .print-event {
+    margin-bottom: 5px;
+    padding: 3px;
+    border-radius: 3px;
+  }
+}
