@@ -74,9 +74,11 @@ const PrintView = ({ events, currentWeek }) => {
                             {formatTime(new Date(event.start).getHours(), new Date(event.start).getMinutes())} - 
                             {formatTime(new Date(event.end).getHours(), new Date(event.end).getMinutes())}
                           </strong>
-                          <div><strong>{event.subject}</strong></div>
+                          {/* Show subject (Vakken) prominently */}
+                          {event.subject && <div className="print-event-subject"><strong>{event.subject}</strong></div>}
                           <div>{event.summary}</div>
-                          {event.type && <div><em>{event.type}</em></div>}
+                          {/* Show type (Opdrachttype) with emphasis */}
+                          {event.type && <div className="print-event-type"><em>{event.type}</em></div>}
                           {event.teacher && <div>Teacher: {event.teacher}</div>}
                           {event.class && <div>Class: {event.class}</div>}
                         </div>

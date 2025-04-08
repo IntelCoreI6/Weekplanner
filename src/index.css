@@ -64,6 +64,63 @@ code {
   overflow: hidden;
   cursor: pointer;
   border: 1px solid rgba(0,0,0,0.2);
+  min-height: 50px;
+  overflow-y: auto;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-time {
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+}
+
+.event-subject {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-summary {
+  margin-bottom: 2px;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.event-type {
+  font-size: 0.75rem;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  margin-top: auto; /* Push to bottom of flex container */
+}
+
+.event-type-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* For compact events, prioritize what to show */
+.event.compact .event-summary {
+  -webkit-line-clamp: 1;
+}
+
+/* Add a hover state to improve usability of short events */
+.event:hover {
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 
 /* Color coding for different event types */
@@ -106,6 +163,95 @@ code {
   border-radius: 8px;
   width: 500px;
   max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Add styles for the event header info in the modal */
+.event-header-info {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 1rem;
+  border-left: 4px solid #007bff;
+}
+
+/* Modal summary styling */
+.event-modal-summary {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Details header section */
+.event-details-header {
+  margin-bottom: 20px;
+  border: 1px solid #eaeaea;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #fcfcfc;
+}
+
+/* Style for the type badge in the modal */
+.event-type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+/* Divider in event form */
+.event-form-divider {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #ddd;
+}
+
+/* Highlight important fields */
+.highlighted-field label {
+  color: #007bff;
+}
+
+.important-input {
+  border-color: #007bff !important;
+  background-color: #f0f7ff !important;
+}
+
+/* Subject value styling */
+.event-subject-value {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.05rem;
+}
+
+/* Color different type badges */
+.event-type-badge-Grote-toets {
+  background-color: #dc3545; /* red */
+}
+
+.event-type-badge-Kleine-toets {
+  background-color: #fd7e14; /* orange */
+}
+
+.event-type-badge-Huiswerk {
+  background-color: #007bff; /* blue */
+}
+
+.event-type-badge-Taak {
+  background-color: #28a745; /* green */
+}
+
+.event-type-badge-Meebrengen {
+  background-color: #6f42c1; /* purple */
+}
+
+.event-type-badge-Opdracht {
+  background-color: #17a2b8; /* teal */
 }
 
 .form-group {
