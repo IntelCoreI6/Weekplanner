@@ -62,3 +62,13 @@ export const formatDateEU = (date) => {
 export const formatTime24h = (hours, minutes = 0) => {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 };
+
+export const defaultTypeColors = {
+  'Grote toets': '#ff6347',
+  'Kleine toets': '#ffa500',
+  'Huiswerk': '#6495ed',
+  'Taak': '#90ee90',
+  'Meebrengen': '#6f42c1',
+  'Opdracht': '#17a2b8',
+  'other': '#357ae8',
+};

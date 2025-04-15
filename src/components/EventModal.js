@@ -99,11 +99,11 @@ const EventModal = ({ event, onClose, onSave, onDelete }) => {
             <label>Opdrachttype</label>
             <select 
               name="type" 
-              value={editedEvent.type || ''} 
+              value={editedEvent.type || 'User Planned'} 
               onChange={handleChange}
               className="important-input"
             >
-              <option value="">Select a type</option>
+              <option value="User Planned">User Planned</option>
               <option value="Grote toets">Grote toets</option>
               <option value="Kleine toets">Kleine toets</option>
               <option value="Huiswerk">Huiswerk</option>
