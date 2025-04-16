@@ -7,9 +7,10 @@ import EventModal from './components/EventModal';
 import PrintView from './components/PrintView';
 import PomodoroTimer from './components/PomodoroTimer';
 import './components/styles.css'
+import './sidebar.css'
 import { defaultTypeColors } from './utils/dateUtils';
-import {IconButton,  Button, ButtonGroup } from '@primer/react';
-import { GearIcon, SyncIcon, DownloadIcon } from '@primer/octicons-react';
+import { ActionBar, Button, ButtonGroup, TreeView } from '@primer/react';
+import { BoldIcon, ItalicIcon, CodeIcon, LinkIcon, GearIcon, SyncIcon, DownloadIcon, SidebarExpandIcon, SidebarCollapseIcon } from '@primer/octicons-react';
 
 function App() {
   const [events, setEvents] = useState([]);
@@ -39,17 +40,24 @@ function App() {
   const [todoWidth, setTodoWidth] = useState(320);
   const [isResizingTodo, setIsResizingTodo] = useState(false);
   const [showTodoSidebar, setShowTodoSidebar] = useState(true);
+const [sidebarFullscreen, setSidebarFullscreen] = useState(false);
   const [draftEvent, setDraftEvent] = useState(null);
   const todoSidebarMin = 180;
   const todoSidebarMax = 500;
   const todoSidebarRef = useRef();
   
   // URL for the iCal feed
-  const ICAL_URL = 'https://spc.smartschool.be/planner/sync/ics/9a4f9e7a-8ba2-487b-9bde-e69ed9e28134/fed90256-170a-5cf0-a22e-0d436b13c5a3';
+  const [icalUrl, setIcalUrl] = useState(() => {
+    return localStorage.getItem('icalUrl') || 'https://spc.smartschool.be/planner/sync/ics/9a4f9e7a-8ba2-487b-9bde-e69ed9e28134/fed90256-170a-5cf0-a22e-0d436b13c5a3';
+  });
 
   useEffect(() => {
     refreshData();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('icalUrl', icalUrl);
+  }, [icalUrl]);
 
   useEffect(() => {
     localStorage.setItem('startHour', startHour);
@@ -78,7 +86,7 @@ function App() {
   const refreshData = async () => {
     try {
       setLoading(true);
-      const unifiedData = await loadUnifiedData(ICAL_URL);
+      const unifiedData = await loadUnifiedData(icalUrl);
       setEvents(unifiedData);
       setLoading(false);
     } catch (err) {
@@ -113,7 +121,7 @@ function App() {
       // Existing user-created task
       updateTask(updatedEvent);
     }
-    const unifiedData = await loadUnifiedData(ICAL_URL);
+    const unifiedData = await loadUnifiedData(icalUrl);
     setEvents(unifiedData);
     setShowModal(false);
     setSelectedEvent(null);
@@ -124,7 +132,7 @@ function App() {
     if (!isImported) {
       removeTask(eventId);
     }
-    const unifiedData = await loadUnifiedData(ICAL_URL);
+    const unifiedData = await loadUnifiedData(icalUrl);
     setEvents(unifiedData);
     setShowModal(false);
     setSelectedEvent(null);
@@ -185,38 +193,22 @@ function App() {
 
   return (
     <div className="app-container">
-      <header>
-        <h1>Week Planner</h1>
-        <ButtonGroup>
-          <IconButton 
-            icon={DownloadIcon}
-            aria-label="Print"
-            title="Print"
-            variant="invisible"
-            onClick={togglePrintView}
-          />
-          <IconButton 
-            icon={SyncIcon}
-            aria-label="Refresh"
-            title="Refresh"
-            variant="invisible"
-            onClick={refreshData}
-          />
-          <Button 
-            variant="default"
-            onClick={() => setViewMode('deadlines')}
-            title="Deadlines"
-          >
-            Deadlines
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
+        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Week Planner</h1>
+        <div className="sidebar-actionbar" style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexShrink: 0, minWidth: '220px', flexWrap: 'nowrap' }}>
+          <Button variant="invisible" size="medium" aria-label="Print" onClick={togglePrintView}>
+            <DownloadIcon />
           </Button>
-          <IconButton 
-            icon={GearIcon}
-            aria-label="Settings"
-            title="Settings"
-            variant="invisible"
-            onClick={() => setShowSettings(true)}
-          />
-        </ButtonGroup>
+          <Button variant="invisible" size="medium" aria-label="Refresh" onClick={refreshData}>
+            <SyncIcon />
+          </Button>
+          <Button variant="invisible" size="medium" aria-label="Settings" onClick={() => setShowSettings(true)}>
+            <GearIcon />
+          </Button>
+          <Button variant="invisible" size="medium" aria-label={sidebarFullscreen ? "Exit Fullscreen Sidebar" : "Expand Sidebar"} onClick={() => setSidebarFullscreen(f => !f)}>
+            {sidebarFullscreen ? <SidebarCollapseIcon /> : <SidebarExpandIcon />}
+          </Button>
+        </div>
       </header>
       {/* Controls bar below header */}
       {!showPrintView && (
@@ -241,9 +233,9 @@ function App() {
             )}
           </div>
           <div className="main-controls-group">
-            <button className="nice-btn" onClick={handlePrevious} title="Previous" aria-label="Previous Week">&#8592;</button>
-            <button className="nice-btn" onClick={handleToday} title="Today">Today</button>
-            <button className="nice-btn" onClick={handleNext} title="Next" aria-label="Next Week">&#8594;</button>
+            <button onClick={handlePrevious} title="Previous" aria-label="Previous Week">&#8592;</button>
+            <button onClick={handleToday} title="Today">Today</button>
+            <button onClick={handleNext} title="Next" aria-label="Next Week">&#8594;</button>
             <span className="divider" />
             <ButtonGroup>
               <Button
@@ -343,65 +335,84 @@ function App() {
             </>
           )}
         </div>
-        {showTodoSidebar && (
+        {showTodoSidebar ? (
           <aside
-            className="upcoming-tasks-todo"
+            className="todo-sidebar"
             ref={todoSidebarRef}
-            style={{ width: todoWidth }}
           >
-            <button className="todo-hide-btn" onClick={() => setShowTodoSidebar(false)} title="Hide todo list">&lt;</button>
-            <h3 style={{marginBottom: 0}}>Upcoming Tasks</h3>
-            <button className="todo-collapse-btn" onClick={() => setShowActiveTodos(v => !v)}>{showActiveTodos ? '−' : '+'}</button>
-            {showActiveTodos && (
-              <ul>
-                {activeTasks.length === 0 && <li>All caught up! 🎉</li>}
-                {activeTasks.map(task => (
-                  <li key={task.id} className={"todo-item" + (checkedTasks.includes(task.id) ? " checked" : "")}> 
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={checkedTasks.includes(task.id)}
-                        onChange={() => handleCheckTask(task.id)}
-                      />
-                      <span className="todo-checkmark"></span>
-                      <span className="summary-type-badge" style={{background:typeColors[task.type]||'#357ae8'}}>{task.type}</span>
-                      <span className="todo-summary">{task.summary}</span>
-                      <span className="todo-date">{new Date(task.start).toLocaleString()}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="todo-completed-header">
-              <button className="todo-collapse-btn" onClick={() => setShowCompletedTodos(v => !v)}>{showCompletedTodos ? '−' : '+'}</button>
-              <span>Completed</span>
-            </div>
-            {showCompletedTodos && (
-              <ul className="todo-completed-list">
-                {completedTasks.length === 0 && <li>No completed tasks yet.</li>}
-                {completedTasks.map(task => (
-                  <li key={task.id} className="todo-item checked"> 
-                    <label>
-                      <input type="checkbox" checked readOnly />
-                      <span className="todo-checkmark"></span>
-                      <span className="summary-type-badge" style={{background:typeColors[task.type]||'#357ae8'}}>{task.type}</span>
-                      <span className="todo-summary">{task.summary}</span>
-                      <span className="todo-date">{new Date(task.start).toLocaleString()}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <button
+              className="sidebar-toggle-btn"
+              onClick={() => setShowTodoSidebar(false)}
+              title="Hide sidebar"
+              aria-label="Hide sidebar"
+            >
+              <SidebarCollapseIcon />
+            </button>
+            <TreeView aria-label="Tasks">
+              <TreeView.Item id="upcoming" defaultExpanded>
+                Upcoming Tasks
+                <TreeView.SubTree>
+                  {activeTasks.length === 0 && (
+                    <TreeView.Item id="all-caught-up">
+                      <span style={{ color: '#888', fontStyle: 'italic' }}>All caught up! 🎉</span>
+                    </TreeView.Item>
+                  )}
+                  {activeTasks.map(task => (
+                    <TreeView.Item id={task.id} key={task.id}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={checkedTasks.includes(task.id)}
+                          onChange={() => handleCheckTask(task.id)}
+                          style={{ marginRight: 6 }}
+                        />
+                        <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
+                        <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
+                        <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{new Date(task.start).toLocaleString()}</span>
+                      </label>
+                    </TreeView.Item>
+                  ))}
+                </TreeView.SubTree>
+              </TreeView.Item>
+              <TreeView.Item id="completed" defaultExpanded>
+                Completed
+                <TreeView.SubTree>
+                  {completedTasks.length === 0 && (
+                    <TreeView.Item id="no-completed">
+                      <span style={{ color: '#888', fontStyle: 'italic' }}>No completed tasks yet.</span>
+                    </TreeView.Item>
+                  )}
+                  {completedTasks.map(task => (
+                    <TreeView.Item id={task.id} key={task.id}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', cursor: 'pointer', opacity: 0.5 }}>
+                        <input type="checkbox" checked readOnly style={{ marginRight: 6 }} />
+                        <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
+                        <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
+                        <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{new Date(task.start).toLocaleString()}</span>
+                      </label>
+                    </TreeView.Item>
+                  ))}
+                </TreeView.SubTree>
+              </TreeView.Item>
+            </TreeView>
             <div
               className="todo-resize-handle"
               onMouseDown={() => setIsResizingTodo(true)}
               title="Resize todo list"
             />
           </aside>
+        ) : (
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setShowTodoSidebar(true)}
+            title="Show sidebar"
+            aria-label="Show sidebar"
+            style={{ right: 0, top: 20, position: 'fixed', zIndex: 30 }}
+          >
+            <SidebarExpandIcon />
+          </button>
         )}
-        {!showTodoSidebar && (
-          <button className="todo-show-btn" onClick={() => setShowTodoSidebar(true)} title="Show todo list">&gt;</button>
-        )}
+
       </div>
       <PomodoroTimer />
       {/* Settings Modal */}
@@ -416,6 +427,42 @@ function App() {
                 to
                 <input type="number" min="1" max="24" value={endHour} onChange={e => setEndHour(Number(e.target.value))} />
               </label>
+            </div>
+            <div className="settings-section">
+              <label htmlFor="ical-url">iCal Feed URL</label>
+              <input
+                id="ical-url"
+                type="text"
+                value={icalUrl}
+                onChange={e => setIcalUrl(e.target.value)}
+                style={{width: '100%', marginTop: 6, marginBottom: 10}}
+              />
+              <button onClick={refreshData} style={{marginBottom: 10}}>Reload Calendar</button>
+            </div>
+            <div className="settings-section">
+              <h3>Backup & Import</h3>
+              <button onClick={async () => {
+                const { exportUserData } = await import('./utils/dataStore');
+                exportUserData();
+              }}>Export Data</button>
+              <input
+                type="file"
+                accept="application/json"
+                style={{ marginLeft: 10 }}
+                onChange={async e => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const text = await file.text();
+                    try {
+                      const { importUserData } = await import('./utils/dataStore');
+                      importUserData(text);
+                      alert('Data imported! Please reload the page.');
+                    } catch (err) {
+                      alert('Failed to import data: ' + err.message);
+                    }
+                  }
+                }}
+              />
             </div>
             <div className="settings-section">
               <h3>Task Type Colors</h3>

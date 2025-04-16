@@ -3,6 +3,34 @@ import { parseICalFeed } from './icalParser';
 // Key for localStorage
 const USER_DATA_KEY = 'weekplanner_user_data';
 
+// Export user data as JSON file
+export function exportUserData() {
+  try {
+    const data = localStorage.getItem(USER_DATA_KEY) || '{}';
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'weekplanner-backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Failed to export data: ' + err.message);
+  }
+}
+
+// Import user data from JSON string
+export function importUserData(jsonText) {
+  try {
+    const data = JSON.parse(jsonText);
+    localStorage.setItem(USER_DATA_KEY, JSON.stringify(data));
+  } catch (err) {
+    throw new Error('Invalid JSON: ' + err.message);
+  }
+}
+
 // Load user-created data from localStorage
 function loadUserData() {
   try {

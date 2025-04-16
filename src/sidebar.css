@@ -1,0 +1,156 @@
+.todo-sidebar {
+  background: #f8f9fa;
+  border-left: 1px solid #e1e4e8;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.04);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), width 0.3s, height 0.3s, left 0.3s, top 0.3s, z-index 0.3s;
+  overflow-y: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 5;
+  min-width: 220px;
+  max-width: 500px;
+  width: 320px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+}
+
+.todo-sidebar.closed {
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.sidebar-toggle-btn {
+  position: fixed;
+  left: unset;
+  right: 0;
+  top: 20px;
+  z-index: 30;
+  background: #fff;
+  border: none;
+  border-radius: 4px 0 0 4px;
+  box-shadow: -1px 0 4px rgba(0,0,0,0.08);
+  padding: 8px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: right 0.3s;
+}
+
+.sidebar-toggle-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+
+.sidebar-actionbar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.sidebar-actionbar button,
+.sidebar-actionbar .ActionBar__button {
+  margin: 0 !important;
+  padding: 8px !important;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  transition: background 0.15s;
+}
+
+.sidebar-actionbar button:hover,
+.sidebar-actionbar .ActionBar__button:hover {
+  background: #f3f4f6;
+}
+
+
+.todo-sidebar-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  left: 0 !important;
+  top: 0 !important;
+  position: fixed !important;
+  z-index: 10000 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.todo-hide-btn, .todo-show-btn {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 1px 0 4px rgba(0,0,0,0.04);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.todo-sidebar-fullscreen .todo-hide-btn {
+  left: 10px;
+  top: 10px;
+  background: #f1f1f1;
+}
+
+.todo-sidebar h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.todo-sidebar ul {
+  padding-left: 18px;
+  margin-bottom: 1rem;
+}
+
+.todo-sidebar .todo-item {
+  margin-bottom: 0.5rem;
+}
+
+.todo-sidebar .todo-summary {
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.todo-sidebar .todo-date {
+  font-size: 0.8em;
+  color: #6a737d;
+  margin-left: 8px;
+}
+
+.todo-sidebar .summary-type-badge {
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.7em;
+  padding: 2px 8px;
+  margin-right: 8px;
+}
+
+.todo-resize-handle {
+  width: 6px;
+  background: #e1e4e8;
+  cursor: ew-resize;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+}

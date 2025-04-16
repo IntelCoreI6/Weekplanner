@@ -1,1 +1,3 @@
 node_modules/*
+weekplanner-backup.json
+*.backup.json
