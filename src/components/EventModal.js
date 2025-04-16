@@ -120,6 +120,29 @@ const EventModal = ({ event, onClose, onSave, onDelete, anchorRect, isNew = fals
         >
           ×
         </button>
+        {/* Delete button shown only for existing events */}
+        {!isNew && (
+          <button
+            onClick={() => onDelete(event.id)}
+            style={{
+              position: 'absolute',
+              bottom: 16,
+              right: 24,
+              background: '#e74c3c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              padding: '8px 16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+            }}
+            title="Verwijder deze taak"
+          >
+            Verwijderen
+          </button>
+        )}
+
         <div style={{marginBottom: 8}}>
           {titleEdit ? (
             <input

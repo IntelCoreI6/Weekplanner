@@ -1,21 +1,15 @@
 .todo-sidebar {
-  background: #f8f9fa;
-  border-left: 1px solid #e1e4e8;
-  box-shadow: -2px 0 6px rgba(0,0,0,0.04);
-  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), width 0.3s, height 0.3s, left 0.3s, top 0.3s, z-index 0.3s;
-  overflow-y: auto;
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 5;
-  min-width: 220px;
-  max-width: 500px;
-  width: 320px;
-  height: 100%;
+  background: #fff;
+  border-right: 1px solid #eee;
+  box-shadow: none;
+  padding: 0;
+  min-width: 320px;
+  max-width: 400px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  transform: translateX(0);
 }
+
 
 .todo-sidebar.closed {
   transform: translateX(100%);
@@ -127,22 +121,24 @@
 
 .todo-sidebar .todo-summary {
   font-weight: 500;
-  margin-left: 8px;
 }
+
 
 .todo-sidebar .todo-date {
+  color: #888;
   font-size: 0.8em;
-  color: #6a737d;
   margin-left: 8px;
 }
 
+
 .todo-sidebar .summary-type-badge {
-  border-radius: 8px;
-  color: #fff;
-  font-size: 0.7em;
+  font-size: 0.75em;
   padding: 2px 8px;
-  margin-right: 8px;
+  border-radius: 8px;
+  margin-right: 6px;
+  color: #fff;
 }
+
 
 .todo-resize-handle {
   width: 6px;

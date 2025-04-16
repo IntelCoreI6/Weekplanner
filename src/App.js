@@ -166,6 +166,14 @@ const [sidebarFullscreen, setSidebarFullscreen] = useState(false);
     setCurrentDate(new Date());
   };
 
+  // Add a new task from the sidebar button
+  const handleAddTask = async () => {
+    const summary = window.prompt('Nieuwe taak toevoegen: Wat moet je doen?');
+    if (!summary) return;
+    await addTask({ summary });
+    refreshData(); // reload events/tasks
+  };
+
   const handleCheckTask = (id) => {
     setCheckedTasks(prev => prev.includes(id) ? prev : [...prev, id]);
     setTimeout(() => {
@@ -188,28 +196,41 @@ const [sidebarFullscreen, setSidebarFullscreen] = useState(false);
   const completedTasks = events.filter(e => checkedTasks.includes(e.id));
   const activeTasks = upcomingTasks.filter(e => !checkedTasks.includes(e.id));
 
+  // Sidebar dropdowns: todo, planned, completed
+  const tasksTodo = events.filter(t => !checkedTasks.includes(t.id) && (!t.start || t.start === ''));
+  const tasksPlanned = events.filter(t => !checkedTasks.includes(t.id) && t.start && t.start !== '');
+  const tasksCompleted = events.filter(t => checkedTasks.includes(t.id));
+
   if (loading) return <div className="app-container">Loading events...</div>;
   if (error) return <div className="app-container">Error: {error}</div>;
 
   return (
     <div className="app-container">
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
-        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Week Planner</h1>
-        <div className="sidebar-actionbar" style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexShrink: 0, minWidth: '220px', flexWrap: 'nowrap' }}>
-          <Button variant="invisible" size="medium" aria-label="Print" onClick={togglePrintView}>
-            <DownloadIcon />
-          </Button>
-          <Button variant="invisible" size="medium" aria-label="Refresh" onClick={refreshData}>
-            <SyncIcon />
-          </Button>
-          <Button variant="invisible" size="medium" aria-label="Settings" onClick={() => setShowSettings(true)}>
-            <GearIcon />
-          </Button>
-          <Button variant="invisible" size="medium" aria-label={sidebarFullscreen ? "Exit Fullscreen Sidebar" : "Expand Sidebar"} onClick={() => setSidebarFullscreen(f => !f)}>
-            {sidebarFullscreen ? <SidebarCollapseIcon /> : <SidebarExpandIcon />}
-          </Button>
+      <div className="topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56, background: '#f6f8fa', borderBottom: '1px solid #e1e4e8', padding: '0 24px', zIndex: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Weekplanner</h1>
         </div>
-      </header>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {!showTodoSidebar && (
+            <ActionBar>
+              <ActionBar.Button icon={BoldIcon} aria-label="Bold" />
+              <ActionBar.Button icon={ItalicIcon} aria-label="Italic" />
+              <ActionBar.Button icon={CodeIcon} aria-label="Code" />
+              <ActionBar.Button icon={LinkIcon} aria-label="Link" />
+              <ActionBar.Button icon={GearIcon} aria-label="Settings" onClick={() => setShowSettings(true)} />
+              <ActionBar.Button icon={SyncIcon} aria-label="Sync" onClick={refreshData} />
+              <ActionBar.Button icon={DownloadIcon} aria-label="Backup" onClick={async () => { const { exportUserData } = await import('./utils/dataStore'); exportUserData(); }} />
+            </ActionBar>
+          )}
+          <Button
+            variant="invisible"
+            aria-label={showTodoSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
+            onClick={() => setShowTodoSidebar(!showTodoSidebar)}
+            leadingIcon={showTodoSidebar ? SidebarCollapseIcon : SidebarExpandIcon}
+            sx={{ p: 2 }}
+          />
+        </div>
+      </div>
       {/* Controls bar below header */}
       {!showPrintView && (
         <div className="main-controls-bar">
@@ -348,53 +369,90 @@ const [sidebarFullscreen, setSidebarFullscreen] = useState(false);
             >
               <SidebarCollapseIcon />
             </button>
-            <TreeView aria-label="Tasks">
-              <TreeView.Item id="upcoming" defaultExpanded>
-                Upcoming Tasks
-                <TreeView.SubTree>
-                  {activeTasks.length === 0 && (
-                    <TreeView.Item id="all-caught-up">
-                      <span style={{ color: '#888', fontStyle: 'italic' }}>All caught up! 🎉</span>
+
+            <aside className="todo-sidebar" ref={todoSidebarRef} style={{display: 'flex', flexDirection: 'column', height: '100vh'}}>
+              <div style={{padding: '20px 16px 8px 16px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                <strong style={{fontSize: '1.1rem'}}>Taken</strong>
+                <Button size="small" variant="primary" onClick={handleAddTask}>Taak toevoegen</Button>
+              </div>
+              <div style={{flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0}}>
+                <TreeView aria-label="Taken" style={{padding: '8px 0', flex: 1, minHeight: 0}}>
+                  <TreeView.Item id="todo" defaultExpanded>
+                    Te doen
+                    <TreeView.SubTree>
+                      {tasksTodo.length === 0 && (
+                        <TreeView.Item id="all-caught-up">
+                          <span style={{ color: '#888', fontStyle: 'italic' }}>Geen taken om te doen!</span>
+                        </TreeView.Item>
+                      )}
+                      {tasksTodo.map(task => (
+                        <TreeView.Item id={task.id} key={task.id}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={checkedTasks.includes(task.id)}
+                              onChange={() => handleCheckTask(task.id)}
+                              style={{ marginRight: 8 }}
+                            />
+                            <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
+                            <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
+                          </label>
+                        </TreeView.Item>
+                      ))}
+                    </TreeView.SubTree>
+                  </TreeView.Item>
+                  <TreeView.Item id="planned" defaultExpanded>
+                    Gepland
+                    <TreeView.SubTree>
+                      {tasksPlanned.length === 0 && (
+                        <TreeView.Item id="no-planned">
+                          <span style={{ color: '#888', fontStyle: 'italic' }}>Nog geen geplande taken.</span>
+                        </TreeView.Item>
+                      )}
+                      {tasksPlanned.map(task => (
+                        <TreeView.Item id={task.id} key={task.id}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={checkedTasks.includes(task.id)}
+                              onChange={() => handleCheckTask(task.id)}
+                              style={{ marginRight: 8 }}
+                            />
+                            <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
+                            <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
+                            <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{task.start ? new Date(task.start).toLocaleString() : ''}</span>
+                          </label>
+                        </TreeView.Item>
+                      ))}
+                    </TreeView.SubTree>
+                  </TreeView.Item>
+                </TreeView>
+                <div style={{marginTop: 'auto', borderTop: '1px solid #eee', background: '#fafbfc'}}>
+                  <TreeView aria-label="Voltooid" style={{padding: '8px 0'}}>
+                    <TreeView.Item id="done" defaultExpanded>
+                      Voltooid
+                      <TreeView.SubTree>
+                        {tasksCompleted.length === 0 && (
+                          <TreeView.Item id="no-completed">
+                            <span style={{ color: '#888', fontStyle: 'italic' }}>Nog geen voltooide taken.</span>
+                          </TreeView.Item>
+                        )}
+                        {tasksCompleted.map(task => (
+                          <TreeView.Item id={task.id} key={task.id}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', cursor: 'pointer', opacity: 0.5 }}>
+                              <input type="checkbox" checked readOnly style={{ marginRight: 8 }} />
+                              <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
+                              <span className="todo-summary" style={{ fontWeight: 500, textDecoration: 'line-through' }}>{task.summary}</span>
+                              <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{task.start ? new Date(task.start).toLocaleString() : ''}</span>
+                            </label>
+                          </TreeView.Item>
+                        ))}
+                      </TreeView.SubTree>
                     </TreeView.Item>
-                  )}
-                  {activeTasks.map(task => (
-                    <TreeView.Item id={task.id} key={task.id}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={checkedTasks.includes(task.id)}
-                          onChange={() => handleCheckTask(task.id)}
-                          style={{ marginRight: 6 }}
-                        />
-                        <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
-                        <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
-                        <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{new Date(task.start).toLocaleString()}</span>
-                      </label>
-                    </TreeView.Item>
-                  ))}
-                </TreeView.SubTree>
-              </TreeView.Item>
-              <TreeView.Item id="completed" defaultExpanded>
-                Completed
-                <TreeView.SubTree>
-                  {completedTasks.length === 0 && (
-                    <TreeView.Item id="no-completed">
-                      <span style={{ color: '#888', fontStyle: 'italic' }}>No completed tasks yet.</span>
-                    </TreeView.Item>
-                  )}
-                  {completedTasks.map(task => (
-                    <TreeView.Item id={task.id} key={task.id}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', cursor: 'pointer', opacity: 0.5 }}>
-                        <input type="checkbox" checked readOnly style={{ marginRight: 6 }} />
-                        <span className="summary-type-badge" style={{ background: typeColors[task.type] || '#357ae8', borderRadius: 8, color: '#fff', fontSize: '0.7em', padding: '2px 8px', marginRight: 6 }}>{task.type}</span>
-                        <span className="todo-summary" style={{ fontWeight: 500 }}>{task.summary}</span>
-                        <span className="todo-date" style={{ fontSize: '0.8em', color: '#6a737d', marginLeft: 8 }}>{new Date(task.start).toLocaleString()}</span>
-                      </label>
-                    </TreeView.Item>
-                  ))}
-                </TreeView.SubTree>
-              </TreeView.Item>
-            </TreeView>
+                  </TreeView>
+                </div>
+              </div>
+            </aside>
             <div
               className="todo-resize-handle"
               onMouseDown={() => setIsResizingTodo(true)}
@@ -407,7 +465,13 @@ const [sidebarFullscreen, setSidebarFullscreen] = useState(false);
             onClick={() => setShowTodoSidebar(true)}
             title="Show sidebar"
             aria-label="Show sidebar"
-            style={{ right: 0, top: 20, position: 'fixed', zIndex: 30 }}
+            style={{
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              position: 'fixed',
+              zIndex: 30
+            }}
           >
             <SidebarExpandIcon />
           </button>
